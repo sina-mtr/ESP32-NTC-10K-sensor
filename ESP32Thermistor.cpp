@@ -5,10 +5,12 @@
    The output of the sensor is linearly proportional to the temperature.
 */
 int Rpin;
-ESP32Thermistor::ESP32Thermistor(const int pin)
+bool Rreverse;
+ESP32Thermistor::ESP32Thermistor(const int pin, const bool reverse)
 {
   pinMode(pin, INPUT);
   Rpin = pin;
+  Rreverse = reverse;
 }
 
 const float ADC_LUT[4096] PROGMEM = { 0,
@@ -318,7 +320,8 @@ float ESP32Thermistor::getTempC(byte calReadings)
   // 3. convert the average analog reading value to resistance
   adc = ADC_LUT[(int)average];
   Vout = adc * Vs/adcMax;
-  Rt = R1 * (Vs - Vout) / Vout;
+  if (Rreverse) Rt = R1 * (Vs - Vout) / Vout;
+  else          Rt = R1 * Vout / (Vs - Vout);
 
   // 4. Calculate the temperature using the B parameter equation (simplified Steinhart-Hart equation)
   T = 1/(1/To + log(Rt/Ro)/Beta);    // Temperature in Kelvin
